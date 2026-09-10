@@ -32,7 +32,7 @@ Request flow: `Client → API Gateway → User Service` (signup) → event publi
 ## Setup & Run Instructions
 
 ```bash
-git clone <repo-url>
+git clone (https://github.com/Harsh1283/Backend-intership.git)
 cd Backend-intership
 cp user-service/.env.example user-service/.env
 cp notification-service/.env.example notification-service/.env
