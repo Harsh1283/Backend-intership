@@ -33,7 +33,7 @@ Request flow: `Client → API Gateway → User Service` (signup) → event publi
 
 ```bash
 git clone <repo-url>
-cd internship-assignment
+cd Backend-intership
 cp user-service/.env.example user-service/.env
 cp notification-service/.env.example notification-service/.env
 cp api-gateway/.env.example api-gateway/.env
