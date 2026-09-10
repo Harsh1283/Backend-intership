@@ -1,0 +1,95 @@
+services:
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - internship_network
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' localhost:27017/test | grep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - internship_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  user-service:
+    build:
+      context: ./user-service
+    restart: unless-stopped
+    env_file:
+      - ./user-service/.env
+    expose:
+      - "4001"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - internship_network
+
+  notification-service:
+    build:
+      context: ./notification-service
+    restart: unless-stopped
+    env_file:
+      - ./notification-service/.env
+    expose:
+      - "4002"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - internship_network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    restart: unless-stopped
+    env_file:
+      - ./api-gateway/.env
+    ports:
+      - "4000:4000"
+    depends_on:
+      user-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - internship_network
+
+volumes:
+  mongodb_data:
+  rabbitmq_data:
+
+networks:
+  internship_network:
+    driver: bridge
